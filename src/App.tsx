@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { Canvas } from "@react-three/fiber";
 import { Topbar } from "~/components/topbar";
 import { Space } from "~/components/space";
+import MusicIcon from "~/assets/music.svg?react";
 
 const BIRTHDAY = new Date("2002-10-29");
 const TUX = `
@@ -26,7 +27,7 @@ _)      \\.___.,|     .'
 
 const App = () => {
   return (
-    <div className={cn("w-screen h-screen", "relative")}>
+    <div className={cn("w-screen h-screen", "relative", "crt-dom")}>
       <Canvas
         style={{
           position: "absolute",
@@ -40,7 +41,7 @@ const App = () => {
         <ambientLight intensity={0.5} />
         <pointLight position={[10, 10, 10]} />
         <Suspense fallback={null}>
-          <Space pixelSize={2} />
+          <Space pixelSize={3} />
         </Suspense>
       </Canvas>
 
@@ -73,10 +74,16 @@ const App = () => {
             <strong> Sapienza University of Rome</strong>.
           </p>
 
+          <p className={cn("text-lg leading-relaxed")}>
+            I love photography, books, comics (stories in general), and writing.
+            <span className={cn("flex gap-2")}>
+              <p>Jazz is the only way!</p>
+              <MusicIcon className={cn("w-6 h-6")} />
+            </span>
+          </p>
+
           <div className={cn("mx-auto max-w-[48ch]")}>
-            <pre className={cn("mt-8 font-mono text-left whitespace-pre")}>
-              {TUX}
-            </pre>
+            <span className={cn("mt-8 text-left whitespace-pre")}>{TUX}</span>
           </div>
 
           <h1 className={cn("text-4xl")}>Projects</h1>
