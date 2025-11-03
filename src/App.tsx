@@ -1,8 +1,9 @@
 import { calcAge, cn } from "~/lib/utils";
-import { Suspense } from "react";
+import { Suspense, useRef } from "react";
 import { Canvas } from "@react-three/fiber";
 import { Topbar } from "~/components/topbar";
 import { Space } from "~/components/space";
+import { useEvent } from "@util-hooks/use-event";
 import MusicIcon from "~/assets/music.svg?react";
 
 const BIRTHDAY = new Date("2002-10-29");
@@ -26,9 +27,19 @@ _)      \\.___.,|     .'
 `;
 
 const App = () => {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  useEvent(window, "resize", () => {
+    if (canvasRef.current) {
+      canvasRef.current.width = window.innerWidth;
+      canvasRef.current.height = window.innerHeight;
+    }
+  });
+
   return (
     <div className={cn("w-screen h-screen", "relative", "crt-dom")}>
       <Canvas
+        ref={canvasRef}
         style={{
           position: "absolute",
           inset: 0,

@@ -19,4 +19,16 @@ function calcAge(birthday: Date, now = new Date()): number {
   return age;
 }
 
-export { cn, calcAge };
+function rng(min: number, max: number): number {
+  return Math.random() * (max - min) + min;
+}
+
+function flip(): boolean {
+  return Math.random() < 0.5;
+}
+
+function getRandomColor(): string {
+  return "#" + ((Math.random() * 0xffffff) << 0).toString(16);
+}
+
+export { cn, calcAge, rng, flip, getRandomColor };
