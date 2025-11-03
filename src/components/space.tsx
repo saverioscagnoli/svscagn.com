@@ -1,7 +1,18 @@
-import React, { useRef, useMemo, useState } from "react";
-import { useFrame } from "@react-three/fiber";
+import React, {
+  useRef,
+  useMemo,
+  useState,
+  type JSX,
+  useEffect,
+  createRef,
+  type RefObject
+} from "react";
+import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import type { Points } from "three";
+import { Planet } from "./planet";
+import { flip, getRandomColor, rng } from "~/lib/utils";
+import { Vec2 } from "~/lib/math";
 
 type StarsProps = {
   count?: number;
@@ -49,51 +60,6 @@ const Stars: React.FC<StarsProps> = ({ count = 500, radius = 10 }) => {
         opacity={0.9}
       />
     </points>
-  );
-};
-
-const Saturn = () => {
-  const groupRef = useRef<THREE.Group>(null);
-  const [time] = useState(Math.random() * Math.PI * 2);
-
-  useFrame(({ clock }) => {
-    if (groupRef.current) {
-      // Wandering orbit path
-      const t = clock.getElapsedTime() * 0.2 + time;
-      const radius = 10;
-      groupRef.current.position.x = Math.cos(t) * radius;
-      groupRef.current.position.y = Math.sin(t * 0.7) * 2;
-      groupRef.current.position.z = Math.sin(t) * radius - 8;
-
-      // Slow rotation
-      groupRef.current.rotation.y += 0.005;
-      groupRef.current.rotation.x = Math.sin(t * 0.5) * 0.3;
-    }
-  });
-
-  return (
-    <group ref={groupRef}>
-      <mesh>
-        <sphereGeometry args={[1.2, 8, 6]} />
-        <meshStandardMaterial
-          color="#f4d03f"
-          flatShading
-          emissive="#8b6914"
-          emissiveIntensity={0.3}
-        />
-      </mesh>
-
-      {/* Ring */}
-      <mesh rotation={[Math.PI / 2.5, 0, 0]}>
-        <torusGeometry args={[1.9, 0.25, 6, 16]} />
-        <meshStandardMaterial
-          color="#f9e79f"
-          flatShading
-          emissive="#c19a6b"
-          emissiveIntensity={0.4}
-        />
-      </mesh>
-    </group>
   );
 };
 
@@ -224,11 +190,110 @@ const PixelatedEffect: React.FC<PixelatedEffectProps> = ({ pixelSize }) => {
     gl.render(quadScene, quadCamera);
     quadGeometry.dispose();
     quadMaterial.dispose();
+    2;
   }, 1);
   return null;
 };
 
 const Space = ({ pixelSize }: { pixelSize: number }) => {
+  const [planets, setPlanets] = useState<JSX.Element[]>([]);
+  // Ref, direction Vec2, speed
+  const refs = useRef<[RefObject<THREE.Group>, Vec2, number][]>([]);
+  const { camera, size } = useThree();
+
+  const frustumAtZ = (z: number) => {
+    let cam = camera as THREE.PerspectiveCamera;
+    let distance = cam.position.z - z;
+    let fovRad = (cam.fov * Math.PI) / 180;
+    let height = 2 * Math.tan(fovRad / 2) * distance;
+    let width = height * (size.width / size.height);
+
+    return { width, height };
+  };
+
+  useEffect(() => {
+    let planetsArr: JSX.Element[] = [];
+    let numPlanets = Math.floor(rng(4, 5));
+
+    for (let i = 0; i < numPlanets; i++) {
+      let z = rng(-300, -280);
+      let { width, height } = frustumAtZ(z);
+
+      // Add a small padding so objects don't spawn at the very edge
+      let pad = 0.9;
+      let x = rng((-width / 2) * pad, (width / 2) * pad);
+      let y = rng((-height / 2) * pad, (height / 2) * pad);
+      let ref = createRef<THREE.Group>();
+
+      refs.current.push([
+        // @ts-ignore
+        ref,
+        new Vec2(rng(-5, 5), flip() ? rng(1, 5) : rng(-5, -1)),
+        rng(1, 3)
+      ]);
+
+      planetsArr.push(
+        <Planet
+          ref={ref}
+          key={i}
+          position={[x, y, z]}
+          radius={rng(3, 7)}
+          color={getRandomColor()}
+          emissive={getRandomColor()}
+          emissiveIntensity={rng(0.2, 0.7)}
+          hasRing={flip()}
+          ringInnerRadius={rng(6, 9)}
+          ringRotation={[rng(0, 3), rng(0, 3), rng(0, 3)]}
+          ringThickness={rng(0.1, 1)}
+          ringColor={getRandomColor()}
+          ringEmissive={getRandomColor()}
+          ringEmissiveIntensity={rng(0.1, 0.5)}
+        />
+      );
+    }
+
+    setPlanets(planetsArr);
+  }, [camera, size.width, size.height]);
+
+  useFrame((_, delta) => {
+    const planetsToRemove: number[] = [];
+
+    for (let i = 0; i < refs.current.length; i++) {
+      const [ref, direction, vel] = refs.current[i];
+      if (!ref.current) continue;
+
+      ref.current.rotation.y += delta * 0.1;
+      ref.current.rotation.x += delta * 0.05;
+      ref.current.position.x += direction.x * vel * delta;
+      ref.current.position.y += direction.y * vel * delta;
+
+      const { width, height } = frustumAtZ(ref.current.position.z);
+
+      if (
+        ref.current.position.x > width / 2 + 5 ||
+        ref.current.position.x < -width / 2 - 5 ||
+        ref.current.position.y > height / 2 + 5 ||
+        ref.current.position.y < -height / 2 - 5
+      ) {
+        // Mark this planet for removal
+        planetsToRemove.push(i);
+      }
+    }
+
+    // Remove planets in reverse order to avoid index issues
+    if (planetsToRemove.length > 0) {
+      for (let i = planetsToRemove.length - 1; i >= 0; i--) {
+        const index = planetsToRemove[i];
+        refs.current.splice(index, 1);
+      }
+
+      // Update planets state to reflect removal
+      setPlanets(prev =>
+        prev.filter((_, idx) => !planetsToRemove.includes(idx))
+      );
+    }
+  });
+
   return (
     <>
       <color attach="background" args={["#1a1a2e"]} />
@@ -237,7 +302,7 @@ const Space = ({ pixelSize }: { pixelSize: number }) => {
       <pointLight position={[-5, -5, 5]} color="#4ecdc4" intensity={0.8} />
 
       <Stars count={1000} radius={15} />
-      <Saturn />
+      {planets}
 
       <PixelatedEffect pixelSize={pixelSize} />
     </>
