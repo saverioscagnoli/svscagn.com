@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React from "react";
 import * as THREE from "three";
 
 type PlanetProps = {
@@ -6,15 +6,11 @@ type PlanetProps = {
   position: [number, number, number];
   radius: number;
   color: string;
-  emissive: string;
-  emissiveIntensity: number;
   hasRing?: boolean;
   ringInnerRadius?: number;
   ringThickness?: number;
   ringSegments?: number;
   ringColor?: string;
-  ringEmissive?: string;
-  ringEmissiveIntensity?: number;
   ringRotation?: [number, number, number];
 };
 
@@ -23,15 +19,11 @@ const Planet: React.FC<PlanetProps> = ({
   position,
   radius,
   color,
-  emissive,
-  emissiveIntensity,
   hasRing = false,
   ringInnerRadius = 1.5,
   ringThickness = 0.2,
   ringSegments = 8,
   ringColor = "#aaaaaa",
-  ringEmissive = "#555555",
-  ringEmissiveIntensity = 0.3,
   ringRotation = [Math.PI / 2, 0, 0]
 }) => {
   return (
@@ -39,12 +31,7 @@ const Planet: React.FC<PlanetProps> = ({
       {/* Planet sphere */}
       <mesh>
         <sphereGeometry args={[radius, 10, 8]} />
-        <meshStandardMaterial
-          color={color}
-          flatShading
-          emissive={emissive}
-          emissiveIntensity={emissiveIntensity}
-        />
+        <meshStandardMaterial color={color} flatShading />
       </mesh>
 
       {/* Optional ring */}
@@ -53,12 +40,7 @@ const Planet: React.FC<PlanetProps> = ({
           <torusGeometry
             args={[ringInnerRadius, ringThickness, ringSegments, 16]}
           />
-          <meshStandardMaterial
-            color={ringColor}
-            flatShading
-            emissive={ringEmissive}
-            emissiveIntensity={ringEmissiveIntensity}
-          />
+          <meshStandardMaterial color={ringColor} flatShading />
         </mesh>
       )}
     </group>

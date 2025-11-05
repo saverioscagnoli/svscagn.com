@@ -1,67 +1,9 @@
-import React, {
-  useRef,
-  useMemo,
-  useState,
-  type JSX,
-  useEffect,
-  createRef,
-  type RefObject
-} from "react";
+import React, { useRef, useState, type JSX, useEffect } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
-import type { Points } from "three";
 import { Planet } from "./planet";
-import { flip, getRandomColor, rng } from "~/lib/utils";
-import { Vec2 } from "~/lib/math";
-
-type StarsProps = {
-  count?: number;
-  radius?: number;
-};
-
-const Stars: React.FC<StarsProps> = ({ count = 500, radius = 10 }) => {
-  const ref = useRef<Points | null>(null);
-  const positions = useMemo(() => {
-    const arr = new Float32Array(count * 3);
-    for (let i = 0; i < count; i++) {
-      const theta = Math.random() * Math.PI * 2;
-      const phi = Math.acos(2 * Math.random() - 1);
-      const r = radius + Math.random() * 4;
-      const x = r * Math.sin(phi) * Math.cos(theta);
-      const y = r * Math.sin(phi) * Math.sin(theta);
-      const z = r * Math.cos(phi);
-      arr[i * 3 + 0] = x;
-      arr[i * 3 + 1] = y;
-      arr[i * 3 + 2] = z;
-    }
-    return arr;
-  }, [count, radius]);
-
-  useFrame((_, delta) => {
-    if (ref.current) ref.current.rotation.y += delta * 0.01;
-  });
-
-  return (
-    <points ref={ref}>
-      <bufferGeometry>
-        {/* @ts-ignore */}
-        <bufferAttribute
-          attach="attributes-position"
-          array={positions}
-          count={positions.length / 3}
-          itemSize={3}
-        />
-      </bufferGeometry>
-      <pointsMaterial
-        color="#ffffff"
-        size={0.04}
-        sizeAttenuation={true}
-        transparent
-        opacity={0.9}
-      />
-    </points>
-  );
-};
+import { pick, rng } from "~/lib/utils";
+import { Stars } from "@react-three/drei";
 
 type PixelatedEffectProps = {
   pixelSize: number;
@@ -195,10 +137,58 @@ const PixelatedEffect: React.FC<PixelatedEffectProps> = ({ pixelSize }) => {
   return null;
 };
 
+const planetColors = [
+  "#FF6B6B",
+  "#FFD93D",
+  "#6BCB77",
+  "#4D96FF",
+  "#9D4EDD",
+  "#FF8FAB",
+  "#00F5D4",
+  "#F15BB5",
+  "#C1C8E4"
+];
+
+const randomPlanet = (
+  frustumWidth: number,
+  frustumHeight: number,
+  z: number,
+  ring: boolean
+): JSX.Element => {
+  const excludeZoneWidth = frustumWidth * 0.4;
+  const excludeZoneHeight = frustumHeight * 0.4;
+
+  let x, y;
+  do {
+    x = rng(-frustumWidth / 2, frustumWidth / 2);
+    y = rng(-frustumHeight / 2, frustumHeight / 2);
+  } while (
+    Math.abs(x) < excludeZoneWidth / 2 &&
+    Math.abs(y) < excludeZoneHeight / 2
+  );
+
+  const toRad = (deg: number) => (deg * Math.PI) / 180;
+
+  // Always tilt ring slightly so it passes behind the planet
+  const tiltDir = Math.random() < 0.5 ? 1 : -1; // flip tilt direction
+  const xRotation = toRad(rng(55, 70) * tiltDir); // always has backward tilt
+  const zRotation = toRad(rng(-15, 15));
+
+  return (
+    <Planet
+      position={[x, y, z]}
+      radius={rng(8, 12)}
+      color={pick(planetColors)}
+      hasRing={ring}
+      ringInnerRadius={18}
+      ringRotation={[xRotation, 0, zRotation]}
+      ringThickness={1.5}
+    />
+  );
+};
+
 const Space = ({ pixelSize }: { pixelSize: number }) => {
-  const [planets, setPlanets] = useState<JSX.Element[]>([]);
-  // Ref, direction Vec2, speed
-  const refs = useRef<[RefObject<THREE.Group>, Vec2, number][]>([]);
+  const [planets, setPlanets] = useState<JSX.Element[]>();
   const { camera, size } = useThree();
 
   const frustumAtZ = (z: number) => {
@@ -212,87 +202,16 @@ const Space = ({ pixelSize }: { pixelSize: number }) => {
   };
 
   useEffect(() => {
-    let planetsArr: JSX.Element[] = [];
-    let numPlanets = Math.floor(rng(4, 5));
+    const newPlanets: JSX.Element[] = [];
+    const z = -300;
+    const frustum = frustumAtZ(z);
 
-    for (let i = 0; i < numPlanets; i++) {
-      let z = rng(-300, -280);
-      let { width, height } = frustumAtZ(z);
-
-      // Add a small padding so objects don't spawn at the very edge
-      let pad = 0.9;
-      let x = rng((-width / 2) * pad, (width / 2) * pad);
-      let y = rng((-height / 2) * pad, (height / 2) * pad);
-      let ref = createRef<THREE.Group>();
-
-      refs.current.push([
-        // @ts-ignore
-        ref,
-        new Vec2(rng(-5, 5), flip() ? rng(1, 5) : rng(-5, -1)),
-        rng(1, 3)
-      ]);
-
-      planetsArr.push(
-        <Planet
-          ref={ref}
-          key={i}
-          position={[x, y, z]}
-          radius={rng(3, 7)}
-          color={getRandomColor()}
-          emissive={getRandomColor()}
-          emissiveIntensity={rng(0.2, 0.7)}
-          hasRing={flip()}
-          ringInnerRadius={rng(6, 9)}
-          ringRotation={[rng(0, 3), rng(0, 3), rng(0, 3)]}
-          ringThickness={rng(0.1, 1)}
-          ringColor={getRandomColor()}
-          ringEmissive={getRandomColor()}
-          ringEmissiveIntensity={rng(0.1, 0.5)}
-        />
-      );
+    for (let i = 0; i < 2; i++) {
+      newPlanets.push(randomPlanet(frustum.width, frustum.height, z, !i));
     }
 
-    setPlanets(planetsArr);
-  }, [camera, size.width, size.height]);
-
-  useFrame((_, delta) => {
-    const planetsToRemove: number[] = [];
-
-    for (let i = 0; i < refs.current.length; i++) {
-      const [ref, direction, vel] = refs.current[i];
-      if (!ref.current) continue;
-
-      ref.current.rotation.y += delta * 0.1;
-      ref.current.rotation.x += delta * 0.05;
-      ref.current.position.x += direction.x * vel * delta;
-      ref.current.position.y += direction.y * vel * delta;
-
-      const { width, height } = frustumAtZ(ref.current.position.z);
-
-      if (
-        ref.current.position.x > width / 2 + 5 ||
-        ref.current.position.x < -width / 2 - 5 ||
-        ref.current.position.y > height / 2 + 5 ||
-        ref.current.position.y < -height / 2 - 5
-      ) {
-        // Mark this planet for removal
-        planetsToRemove.push(i);
-      }
-    }
-
-    // Remove planets in reverse order to avoid index issues
-    if (planetsToRemove.length > 0) {
-      for (let i = planetsToRemove.length - 1; i >= 0; i--) {
-        const index = planetsToRemove[i];
-        refs.current.splice(index, 1);
-      }
-
-      // Update planets state to reflect removal
-      setPlanets(prev =>
-        prev.filter((_, idx) => !planetsToRemove.includes(idx))
-      );
-    }
-  });
+    setPlanets(newPlanets);
+  }, []);
 
   return (
     <>
@@ -300,10 +219,8 @@ const Space = ({ pixelSize }: { pixelSize: number }) => {
       <ambientLight intensity={0.5} />
       <pointLight position={[5, 5, 5]} intensity={1} />
       <pointLight position={[-5, -5, 5]} color="#4ecdc4" intensity={0.8} />
-
-      <Stars count={1000} radius={15} />
+      <Stars count={1500} radius={150} speed={0.1} />
       {planets}
-
       <PixelatedEffect pixelSize={pixelSize} />
     </>
   );

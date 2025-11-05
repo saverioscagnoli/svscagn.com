@@ -27,8 +27,12 @@ function flip(): boolean {
   return Math.random() < 0.5;
 }
 
+function pick<T>(arr: T[]): T {
+  return arr[Math.floor(rng(0, arr.length - 1))];
+}
+
 function getRandomColor(): string {
   return "#" + ((Math.random() * 0xffffff) << 0).toString(16);
 }
 
-export { cn, calcAge, rng, flip, getRandomColor };
+export { cn, calcAge, rng, flip, pick, getRandomColor };
