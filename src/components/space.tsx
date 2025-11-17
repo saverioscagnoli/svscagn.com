@@ -1,227 +1,155 @@
-import React, { useRef, useState, type JSX, useEffect } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
+import { useMemo, useRef } from "react";
 import * as THREE from "three";
-import { Planet } from "./planet";
-import { pick, rng } from "~/lib/utils";
-import { Stars } from "@react-three/drei";
+import { Planet } from "~/components/planet";
+import { Stars } from "~/components/stars";
+import { TexturePlane } from "~/components/texture-plane";
 
-type PixelatedEffectProps = {
-  pixelSize: number;
-};
+const ROTATING_FACTOR = 0.001;
 
-const PixelatedEffect: React.FC<PixelatedEffectProps> = ({ pixelSize }) => {
-  const composerRef = useRef<any>(null);
-  const timeRef = useRef(0);
+const Space = () => {
+  const groupRef = useRef<THREE.Group>(null);
+  const { viewport } = useThree();
 
-  useFrame(({ gl, scene, camera, size }, delta) => {
-    timeRef.current += delta;
-
-    const w = Math.floor(size.width / pixelSize);
-    const h = Math.floor(size.height / pixelSize);
-
-    if (!composerRef.current) {
-      const renderTarget = new THREE.WebGLRenderTarget(w, h, {
-        minFilter: THREE.NearestFilter,
-        magFilter: THREE.NearestFilter,
-        format: THREE.RGBAFormat
-      });
-
-      composerRef.current = { renderTarget, w, h };
-    } else if (composerRef.current.w !== w || composerRef.current.h !== h) {
-      composerRef.current.renderTarget.setSize(w, h);
-      composerRef.current.w = w;
-      composerRef.current.h = h;
+  useFrame((_, dt) => {
+    if (groupRef.current) {
+      groupRef.current.rotation.y += ROTATING_FACTOR * dt;
     }
+  });
 
-    gl.setRenderTarget(composerRef.current.renderTarget);
-    gl.render(scene, camera);
-    gl.setRenderTarget(null);
-    gl.clear();
+  const randomSeed = useRef(Math.random() * 1000);
 
-    const quadScene = new THREE.Scene();
-    const quadCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
-    const quadGeometry = new THREE.PlaneGeometry(2, 2);
+  const positions = useMemo(() => {
+    let seed = randomSeed.current;
 
-    const quadMaterial = new THREE.ShaderMaterial({
-      uniforms: {
-        tDiffuse: { value: composerRef.current.renderTarget.texture },
-        time: { value: timeRef.current },
-        resolution: { value: new THREE.Vector2(size.width, size.height) }
-      },
-      vertexShader: `
-    varying vec2 vUv;
+    const seededRandom = () => {
+      seed = (seed * 9301 + 49297) % 233280;
+      return seed / 233280;
+    };
 
-    void main() {
-      vUv = uv;
-      gl_Position = vec4(position, 1.0);
-    }
-  `,
-      fragmentShader: `
-    uniform sampler2D tDiffuse;
-    uniform float time;
-    uniform vec2 resolution;
-    varying vec2 vUv;
+    const getRandomPosition = (
+      zPos: number,
+      existingPositions: Array<{ x: number; y: number }> = [],
+      margin: number = 0.9,
+      centerExclusion: number = 0.3,
+      minDistance: number = 15
+    ) => {
+      const viewportAtZ = viewport.getCurrentViewport(undefined, [0, 0, zPos]);
+      const maxX = (viewportAtZ.width / 2) * margin;
+      const maxY = (viewportAtZ.height / 2) * margin;
+      const centerX = (viewportAtZ.width / 2) * centerExclusion;
+      const centerY = (viewportAtZ.height / 2) * centerExclusion;
 
-    // --- CRT screen curvature ---
-    vec2 curveRemapUV(vec2 uv) {
-      uv = uv * 2.0 - 1.0;
-      vec2 offset = abs(uv.yx) / vec2(4.0, 4.0); // higher = gentler curve
-      uv += uv * offset * offset * 0.5;          // 0.5 multiplier softens more
-      uv = uv * 0.5 + 0.5;
-      return uv;
-    }
+      let x: number, y: number;
+      let attempts = 0;
+      const maxAttempts = 50;
 
-    void main() {
-      vec2 uv = curveRemapUV(vUv);
+      do {
+        x = (seededRandom() - 0.5) * 2 * maxX;
+        y = (seededRandom() - 0.5) * 2 * maxY;
+        attempts++;
 
-      // Discard outside curved area
-      if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) {
-        gl_FragColor = vec4(0.0);
-        return;
-      }
+        const isOutsideCenter = Math.abs(x) > centerX || Math.abs(y) > centerY;
 
-      vec4 color = texture2D(tDiffuse, uv);
+        const isFarEnough = existingPositions.every(pos => {
+          const distance = Math.sqrt(
+            Math.pow(x - pos.x, 2) + Math.pow(y - pos.y, 2)
+          );
+          return distance >= minDistance;
+        });
 
-      // --- Scanlines ---
-      float scanIntensity = 0.08;
-      float scanFreq = 2.5;
-      float scanline = 0.5 + 0.5 * sin(uv.y * resolution.y * scanFreq);
-      color.rgb *= 0.9 + 0.1 * scanline;
+        if (isOutsideCenter && isFarEnough) {
+          break;
+        }
+      } while (attempts < maxAttempts);
 
-      float strongLine = smoothstep(0.95, 1.0, sin(uv.y * resolution.y * 0.3));
-      color.rgb *= 1.0 - strongLine * 0.1;
+      return { x, y };
+    };
 
-      // --- Vignette ---
-      vec2 vignetteUV = vUv * (1.0 - vUv.yx);
-      float vignette = vignetteUV.x * vignetteUV.y * 15.0;
-      vignette = pow(vignette, 0.25);
-      color.rgb *= vignette;
+    const existing: Array<{ x: number; y: number }> = [];
 
-      // --- Chromatic aberration ---
-      float aberration = 0.002;
-      float r = texture2D(tDiffuse, uv + vec2(aberration, 0.0)).r;
-      float b = texture2D(tDiffuse, uv - vec2(aberration, 0.0)).b;
-      color.r = r;
-      color.b = b;
+    const planet1 = { ...getRandomPosition(-50, existing), z: -50 };
+    existing.push({ x: planet1.x, y: planet1.y });
 
-      // --- Flicker ---
-      float flicker = 0.98 + 0.02 * sin(time * 20.0);
-      color.rgb *= flicker;
+    const planet2 = { ...getRandomPosition(-50, existing), z: -50 };
+    existing.push({ x: planet2.x, y: planet2.y });
 
-      // --- Green tint ---
-      color.g *= 1.05;
+    const galaxy1 = { ...getRandomPosition(-50, existing), z: -50 };
+    existing.push({ x: galaxy1.x, y: galaxy1.y });
 
-      // --- Glass reflection hint ---
-      vec3 glassTint = vec3(0.05, 0.08, 0.1);
-      float curveAmount = pow(abs(uv.x - 0.5) + abs(uv.y - 0.5), 2.0);
-      color.rgb += glassTint * curveAmount * 0.6;
+    const galaxy2 = { ...getRandomPosition(-75, existing), z: -75 };
+    existing.push({ x: galaxy2.x, y: galaxy2.y });
 
-      // --- Glow center (emphasize curvature) ---
-      float edgeDist = distance(vUv, vec2(0.5));
-      float glow = smoothstep(0.8, 0.2, edgeDist);
-      color.rgb *= 0.9 + 0.1 * glow;
+    const blackHole = { ...getRandomPosition(-100, existing), z: -100 };
 
-      gl_FragColor = color;
-    }
-  `
-    });
-
-    const quad = new THREE.Mesh(quadGeometry, quadMaterial);
-
-    quadScene.add(quad);
-    gl.render(quadScene, quadCamera);
-    quadGeometry.dispose();
-    quadMaterial.dispose();
-    2;
-  }, 1);
-  return null;
-};
-
-const planetColors = [
-  "#FF6B6B",
-  "#FFD93D",
-  "#6BCB77",
-  "#4D96FF",
-  "#9D4EDD",
-  "#FF8FAB",
-  "#00F5D4",
-  "#F15BB5",
-  "#C1C8E4"
-];
-
-const randomPlanet = (
-  frustumWidth: number,
-  frustumHeight: number,
-  z: number,
-  ring: boolean
-): JSX.Element => {
-  const excludeZoneWidth = frustumWidth * 0.4;
-  const excludeZoneHeight = frustumHeight * 0.4;
-
-  let x, y;
-  do {
-    x = rng(-frustumWidth / 2, frustumWidth / 2);
-    y = rng(-frustumHeight / 2, frustumHeight / 2);
-  } while (
-    Math.abs(x) < excludeZoneWidth / 2 &&
-    Math.abs(y) < excludeZoneHeight / 2
-  );
-
-  const toRad = (deg: number) => (deg * Math.PI) / 180;
-
-  // Always tilt ring slightly so it passes behind the planet
-  const tiltDir = Math.random() < 0.5 ? 1 : -1; // flip tilt direction
-  const xRotation = toRad(rng(55, 70) * tiltDir); // always has backward tilt
-  const zRotation = toRad(rng(-15, 15));
-
-  return (
-    <Planet
-      position={[x, y, z]}
-      radius={rng(8, 12)}
-      color={pick(planetColors)}
-      hasRing={ring}
-      ringInnerRadius={18}
-      ringRotation={[xRotation, 0, zRotation]}
-      ringThickness={1.5}
-    />
-  );
-};
-
-const Space = ({ pixelSize }: { pixelSize: number }) => {
-  const [planets, setPlanets] = useState<JSX.Element[]>();
-  const { camera, size } = useThree();
-
-  const frustumAtZ = (z: number) => {
-    let cam = camera as THREE.PerspectiveCamera;
-    let distance = cam.position.z - z;
-    let fovRad = (cam.fov * Math.PI) / 180;
-    let height = 2 * Math.tan(fovRad / 2) * distance;
-    let width = height * (size.width / size.height);
-
-    return { width, height };
-  };
-
-  useEffect(() => {
-    const newPlanets: JSX.Element[] = [];
-    const z = -300;
-    const frustum = frustumAtZ(z);
-
-    for (let i = 0; i < 2; i++) {
-      newPlanets.push(randomPlanet(frustum.width, frustum.height, z, !i));
-    }
-
-    setPlanets(newPlanets);
-  }, []);
+    return {
+      planet1,
+      planet2,
+      galaxy1,
+      galaxy2,
+      blackHole
+    };
+  }, [viewport]);
 
   return (
     <>
-      <color attach="background" args={["#1a1a2e"]} />
-      <ambientLight intensity={0.5} />
-      <pointLight position={[5, 5, 5]} intensity={1} />
-      <pointLight position={[-5, -5, 5]} color="#4ecdc4" intensity={0.8} />
-      <Stars count={1500} radius={150} speed={0.1} />
-      {planets}
-      <PixelatedEffect pixelSize={pixelSize} />
+      <Planet
+        position={[
+          positions.planet1.x,
+          positions.planet1.y,
+          positions.planet1.z
+        ]}
+        radius={2}
+        color="#ffffff"
+        hasRing
+        ringColor="orange"
+        ringInnerRadius={3}
+        ringThickness={0.4}
+        ringRotation={[20, 120, 0]}
+      />
+      <Planet
+        position={[
+          positions.planet2.x,
+          positions.planet2.y,
+          positions.planet2.z
+        ]}
+        radius={2}
+        color="red"
+        hasRing
+        ringColor="cyan"
+        ringInnerRadius={3}
+        ringThickness={0.4}
+        ringRotation={[20, 120, 0]}
+      />
+      <TexturePlane
+        textureUrl="/galaxy-1.webm"
+        position={[
+          positions.galaxy1.x,
+          positions.galaxy1.y,
+          positions.galaxy1.z
+        ]}
+      />
+      <TexturePlane
+        textureUrl="/galaxy-2.webm"
+        position={[
+          positions.galaxy2.x,
+          positions.galaxy2.y,
+          positions.galaxy2.z
+        ]}
+        scale={2}
+      />
+      <TexturePlane
+        textureUrl="/black-hole.webm"
+        position={[
+          positions.blackHole.x,
+          positions.blackHole.y,
+          positions.blackHole.z
+        ]}
+        scale={3}
+      />
+      <group ref={groupRef}>
+        <Stars count={2000} radius={1500} />
+      </group>
     </>
   );
 };

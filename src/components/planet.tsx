@@ -28,13 +28,11 @@ const Planet: React.FC<PlanetProps> = ({
 }) => {
   return (
     <group position={position} ref={ref}>
-      {/* Planet sphere */}
       <mesh>
         <sphereGeometry args={[radius, 10, 8]} />
         <meshStandardMaterial color={color} flatShading />
       </mesh>
 
-      {/* Optional ring */}
       {hasRing && (
         <mesh rotation={ringRotation}>
           <torusGeometry

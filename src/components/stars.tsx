@@ -1,51 +1,62 @@
-import { useFrame } from "@react-three/fiber";
-import { useEffect, useMemo, useRef } from "react";
-import type { Points } from "three";
+import React, { useRef, useMemo } from "react";
+import * as THREE from "three";
 
 type StarsProps = {
   count?: number;
   radius?: number;
 };
 
-const Stars: React.FC<StarsProps> = ({ count = 500, radius = 10 }) => {
-  const ref = useRef<Points | null>(null);
-  const positions = useMemo(() => {
-    const arr = new Float32Array(count * 3);
+const Stars: React.FC<StarsProps> = ({ count = 1100, radius = 1500 }) => {
+  const starsRef = useRef<THREE.Points>(null);
+
+  const [positions, colors] = useMemo(() => {
+    const positions = new Float32Array(count * 3);
+    const colors = new Float32Array(count * 3);
+
     for (let i = 0; i < count; i++) {
+      const i3 = i * 3;
+
+      const r = radius * (0.5 + Math.random() * 0.5);
       const theta = Math.random() * Math.PI * 2;
       const phi = Math.acos(2 * Math.random() - 1);
-      const r = radius + Math.random() * 4;
-      const x = r * Math.sin(phi) * Math.cos(theta);
-      const y = r * Math.sin(phi) * Math.sin(theta);
-      const z = r * Math.cos(phi);
-      arr[i * 3 + 0] = x;
-      arr[i * 3 + 1] = y;
-      arr[i * 3 + 2] = z;
+
+      positions[i3] = r * Math.sin(phi) * Math.cos(theta);
+      positions[i3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+      positions[i3 + 2] = r * Math.cos(phi);
+
+      const brightness = 0.8 + Math.random() * 0.2;
+      colors[i3] = brightness;
+      colors[i3 + 1] = brightness;
+      colors[i3 + 2] = brightness;
     }
-    return arr;
+
+    return [positions, colors];
   }, [count, radius]);
 
-  useFrame((_, delta) => {
-    if (ref.current) ref.current.rotation.y += delta * 0.001;
-  });
-
   return (
-    <points ref={ref}>
+    <points ref={starsRef}>
       <bufferGeometry>
         {/* @ts-ignore */}
         <bufferAttribute
           attach="attributes-position"
-          array={positions}
           count={positions.length / 3}
+          array={positions}
+          itemSize={3}
+        />
+        {/* @ts-ignore */}
+        <bufferAttribute
+          attach="attributes-color"
+          count={colors.length / 3}
+          array={colors}
           itemSize={3}
         />
       </bufferGeometry>
       <pointsMaterial
-        color="#ffffff"
-        size={0.04}
-        sizeAttenuation={true}
+        size={1.5}
+        vertexColors
         transparent
-        opacity={0.9}
+        opacity={1}
+        sizeAttenuation
       />
     </points>
   );

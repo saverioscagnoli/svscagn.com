@@ -1,8 +1,5 @@
-/// <reference types="vite/client" />
-/// <reference types="vite-plugin-svgr/client" />
-
 import { createRoot } from "react-dom/client";
-import { App } from "~/App";
+import { App } from "~/App.tsx";
 
 import "~/index.css";
 

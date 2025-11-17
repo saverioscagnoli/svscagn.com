@@ -1,10 +1,8 @@
-import { calcAge, cn } from "~/lib/utils";
-import { Suspense, useRef } from "react";
 import { Canvas } from "@react-three/fiber";
+import { calculateAge, cn } from "~/lib/utils";
 import { Topbar } from "~/components/topbar";
+import { PixelatedCRTEffect } from "~/components/crt-effect";
 import { Space } from "~/components/space";
-import { useEvent } from "@util-hooks/use-event";
-import MusicIcon from "~/assets/music.svg?react";
 
 const BIRTHDAY = new Date("2002-10-29");
 const TUX = `
@@ -23,82 +21,96 @@ const TUX = `
  |    \`.       | \`' \\Zq
 _)      \\.___.,|     .'
 \\____   )MMMMMP|   .'
-     \`-'       \`--' 
+     \`-'       \`--'
+`;
+
+const DEBIAN = `
+        _,met$$$$$gg.
+     ,g$$$$$$$$$$$$$$$P.
+   ,g$$P""       """Y$$.".
+  ,$$P'              \`$$$.
+',$$P       ,ggs.     \`$$b:
+\`d$$'     ,$P"'   .    $$$
+ $$P      d$'     ,    $$P
+ $$:      $$.   -    ,d$$'
+ $$;      Y$b._   _,d$P'
+ Y$$.    \`.\`"Y$$$$P"'
+ \`$$b      "-.__
+  \`Y$$b
+   \`Y$$.
+     \`$$b.
+       \`Y$$b.
+         \`"Y$b._
+             \`\`\`\`"
 `;
 
 const App = () => {
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-
-  useEvent(window, "resize", () => {
-    if (canvasRef.current) {
-      canvasRef.current.width = window.innerWidth;
-      canvasRef.current.height = window.innerHeight;
-    }
-  });
-
   return (
-    <div className={cn("w-screen h-screen", "relative", "crt-dom")}>
+    <div className={cn("w-screen h-screen", "relative")}>
       <Canvas
-        ref={canvasRef}
-        style={{
-          position: "absolute",
-          inset: 0,
-          zIndex: 0,
-          pointerEvents: "none"
-        }}
-        camera={{ position: [0, 0, 5], fov: 50 }}
-        dpr={[1, 2]}
+        className={cn("w-full h-full absolute inset-0 z-0 pointer-none")}
+        camera={{ position: [0, 0, 5], fov: 75 }}
       >
+        <color attach="background" args={["#000000"]} />
         <ambientLight intensity={0.5} />
         <pointLight position={[10, 10, 10]} />
-        <Suspense fallback={null}>
-          <Space pixelSize={3} />
-        </Suspense>
+        <Space />
+        <PixelatedCRTEffect pixelSize={4} />
       </Canvas>
-
-      <Topbar />
-      <div className={cn("flex justify-center", "py-20", "relative z-1")}>
+      <Topbar className={cn("fixed top-0 z-20")} />
+      <div
+        className={cn(
+          "w-full h-full absolute inset-0 z-10",
+          "pt-24 pb-8",
+          "flex justify-center",
+          "backdrop-blur-xs",
+          "overflow-y-auto overflow-x-hidden"
+        )}
+      >
         <div
           className={cn(
-            "max-w-full px-6 sm:max-w-xl md:max-w-2xl lg:max-w-3xl",
-            "flex flex-col",
-            "gap-5",
-            "text-left"
+            "max-w-full w-full px-4 sm:px-6 sm:max-w-xl md:max-w-2xl lg:max-w-3xl",
+            "pb-8",
+            "bg-black/30 rounded-lg p-6 sm:p-8"
           )}
         >
-          <h1 className={cn("text-5xl font-bold")}>Saverio Scagnoli</h1>
-          <p className={cn("text-xl")}>
-            fullstack developer, free software enthusiast, computer lover.
+          <h1 className={cn("text-[32px] sm:text-[48px] break-words")}>
+            Saverio Scagnoli
+          </h1>
+          <h2 className={cn("mt-4 text-[20px] sm:text-[32px] break-words")}>
+            Fullstack developer, Open Source enthusiast, Computer lover
+          </h2>
+          <p className={cn("mt-7 break-words")}>
+            I'm a {calculateAge(BIRTHDAY)} years old developer from Rome, Italy;
+            passionate about systems' software.
           </p>
-          <p className={cn("text-lg leading-relaxed")}>
-            I'm a {calcAge(BIRTHDAY)}-year-old developer from Rome, Italy,
-            passionate about building clean and efficient software.
+          <p className={cn("mt-7 break-words")}>
+            I love doing system's programming, building developement tools,
+            utility tools, but I also enjoy making user interfaces and desktop
+            apps.
+            <br />
+            For backend, systems, etc, I love Go and Rust. <br />
+            For frontend, I use React and TypeScript.
           </p>
-          <p className={cn("text-lg loading-relaxed")}>
-            I love doing systems programming the most, but I also enjoy working
-            on user interfaces. For backend stuff, I love working with Rust and
-            Go, while for frontend development, I enjoy using React and
-            TypeScript,
+          <p className={cn("mt-7 break-words")}>
+            I'm currently pursuing a bachelor's degree in Computer Science at
+            'La Sapienza' University of Rome.
           </p>
-          <p className={cn("text-lg leading-relaxed")}>
-            Currently pursuing a Bachelor's degree in Computer Science at
-            <strong> Sapienza University of Rome</strong>.
+          <p className={cn("mt-7 break-words")}>
+            Apart from nerd stuff, I enjoy other nerd stuff, such as movies,
+            comics and photography. <br />
+            Jazz is the only way!
           </p>
-
-          <p className={cn("text-lg leading-relaxed")}>
-            I love photography, books, comics (stories in general), and writing.
-            <span className={cn("flex gap-2")}>
-              <p>Jazz is the only way!</p>
-              <MusicIcon className={cn("w-6 h-6")} />
-            </span>
-          </p>
-
-          <div className={cn("mx-auto max-w-[48ch]")}>
-            <span className={cn("mt-8 text-left whitespace-pre")}>{TUX}</span>
-          </div>
-
-          <h1 className={cn("text-4xl")}>Projects</h1>
-          <p className={cn("text-lg loading-relaxed")}>Incredible projects</p>
+          <span
+            className={cn(
+              "w-full flex gap-4 sm:gap-16 justify-center mt-8 text-left whitespace-pre",
+              "hidden sm:flex",
+              "overflow-x-auto"
+            )}
+          >
+            <p>{TUX}</p>
+            <p>{DEBIAN}</p>
+          </span>
         </div>
       </div>
     </div>

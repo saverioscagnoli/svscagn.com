@@ -1,19 +1,62 @@
-@import url("https://fonts.googleapis.com/css2?family=VT323&display=swap");
 @import "tailwindcss";
 
 @font-face {
-  font-family: "Perfect DOS VGA 437";
-  /* point to the real file in public/ and declare format so the sanitizer accepts it */
-  src: url("/perfect-dos-vga-437.ttf") format("truetype");
-  font-weight: 400;
+  font-family: "DOS-V";
+  src: url("/DOS-V.ttf");
+  font-weight: normal;
   font-style: normal;
-  font-display: swap;
+}
+
+@font-face {
+  font-family: "IBM-Model3x";
+  src: url("/IBM-Model3x.ttf");
+  font-weight: normal;
+  font-style: normal;
 }
 
 body {
-  font-family: "Perfect DOS VGA 437", monospace;
-  background: #000;
-  color: #fff;
-  min-height: 100vh;
-  margin: 0;
+  color: white;
+  font-family: "IBM-Model3x";
+  image-rendering: pixelated;
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: grayscale;
+  font-smooth: never;
+  line-height: 1.2;
+
+  /* Ensure crisp bitmap font rendering */
+  image-rendering: -moz-crisp-edges;
+  image-rendering: -webkit-crisp-edges;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+
+  /* Use base font size that's a power of 2 */
+  font-size: 16px;
+}
+
+/* Ensure all text elements maintain crisp rendering */
+* {
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: grayscale;
+  font-smooth: never;
+  text-rendering: optimizeSpeed;
+
+  /* Prevent subpixel positioning */
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+}
+
+/* Force pixel-perfect text rendering */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+span,
+div {
+  /* Only use font sizes that are multiples of 8px for bitmap fonts */
+  /* This is handled via Tailwind classes, but enforced here */
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }

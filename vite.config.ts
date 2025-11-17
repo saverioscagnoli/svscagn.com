@@ -1,11 +1,17 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
-import tsconfigPaths from "vite-tsconfig-paths";
 import tailwindcss from "@tailwindcss/vite";
-import svgr from "vite-plugin-svgr";
+import tsconfigPaths from "vite-tsconfig-paths";
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: "/svscagn.com/",
-  plugins: [react(), tsconfigPaths(), tailwindcss(), svgr()]
+  plugins: [
+    react({
+      babel: {
+        plugins: [["babel-plugin-react-compiler"]]
+      }
+    }),
+    tailwindcss(),
+    tsconfigPaths()
+  ]
 });
