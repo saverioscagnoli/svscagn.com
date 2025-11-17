@@ -16,36 +16,30 @@
 
 body {
   color: white;
-  font-family: "IBM-Model3x";
+  font-family: "DOS-V";
   image-rendering: pixelated;
   -webkit-font-smoothing: none;
   -moz-osx-font-smoothing: grayscale;
   font-smooth: never;
   line-height: 1.2;
 
-  /* Ensure crisp bitmap font rendering */
   image-rendering: -moz-crisp-edges;
   image-rendering: -webkit-crisp-edges;
   image-rendering: pixelated;
   image-rendering: crisp-edges;
-
-  /* Use base font size that's a power of 2 */
   font-size: 16px;
 }
 
-/* Ensure all text elements maintain crisp rendering */
 * {
   -webkit-font-smoothing: none;
   -moz-osx-font-smoothing: grayscale;
   font-smooth: never;
   text-rendering: optimizeSpeed;
 
-  /* Prevent subpixel positioning */
   -webkit-transform: translateZ(0);
   transform: translateZ(0);
 }
 
-/* Force pixel-perfect text rendering */
 h1,
 h2,
 h3,
@@ -55,8 +49,6 @@ h6,
 p,
 span,
 div {
-  /* Only use font sizes that are multiples of 8px for bitmap fonts */
-  /* This is handled via Tailwind classes, but enforced here */
   transform: translateZ(0);
   backface-visibility: hidden;
 }

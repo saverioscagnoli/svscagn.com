@@ -1,19 +1,46 @@
 import { useFrame, useThree } from "@react-three/fiber";
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { Planet } from "~/components/planet";
 import { Stars } from "~/components/stars";
 import { TexturePlane } from "~/components/texture-plane";
 
-const ROTATING_FACTOR = 0.001;
+const STARS_ROTATING_FACTOR = 0.001;
+const PLANETS_ROTATING_FACTOR = [Math.random() * 0.5, Math.random() * 0.5];
 
 const Space = () => {
   const groupRef = useRef<THREE.Group>(null);
+  const planet1Ref = useRef<THREE.Group>(null);
+  const planet2Ref = useRef<THREE.Group>(null);
   const { viewport } = useThree();
+
+  useEffect(() => {
+    if (planet1Ref.current) {
+      planet1Ref.current.rotation.x = Math.random() * Math.PI;
+      planet1Ref.current.rotation.y = Math.random() * Math.PI;
+      planet1Ref.current.rotation.z = Math.random() * Math.PI;
+    }
+
+    if (planet2Ref.current) {
+      planet2Ref.current.rotation.x = Math.random() * Math.PI;
+      planet2Ref.current.rotation.y = Math.random() * Math.PI;
+      planet2Ref.current.rotation.z = Math.random() * Math.PI;
+    }
+  }, [planet1Ref.current, planet2Ref.current]);
 
   useFrame((_, dt) => {
     if (groupRef.current) {
-      groupRef.current.rotation.y += ROTATING_FACTOR * dt;
+      groupRef.current.rotation.y += STARS_ROTATING_FACTOR * dt;
+    }
+
+    if (planet1Ref.current) {
+      planet1Ref.current.rotation.y += dt * PLANETS_ROTATING_FACTOR[0];
+      planet1Ref.current.rotation.x += dt * PLANETS_ROTATING_FACTOR[0];
+    }
+
+    if (planet2Ref.current) {
+      planet2Ref.current.rotation.y += dt * PLANETS_ROTATING_FACTOR[1];
+      planet2Ref.current.rotation.x += dt * PLANETS_ROTATING_FACTOR[1];
     }
   });
 
@@ -106,6 +133,7 @@ const Space = () => {
         ringInnerRadius={3}
         ringThickness={0.4}
         ringRotation={[20, 120, 0]}
+        ref={planet1Ref}
       />
       <Planet
         position={[
@@ -120,6 +148,7 @@ const Space = () => {
         ringInnerRadius={3}
         ringThickness={0.4}
         ringRotation={[20, 120, 0]}
+        ref={planet2Ref}
       />
       <TexturePlane
         textureUrl="/galaxy-1.webm"

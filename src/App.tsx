@@ -74,17 +74,17 @@ const App = () => {
             "bg-black/30 rounded-lg p-6 sm:p-8"
           )}
         >
-          <h1 className={cn("text-[32px] sm:text-[48px] break-words")}>
+          <h1 className={cn("text-[32px] sm:text-[48px] wrap-break-words")}>
             Saverio Scagnoli
           </h1>
-          <h2 className={cn("mt-4 text-[20px] sm:text-[32px] break-words")}>
+          <h2 className={cn("mt-4 sm:text-[32px] wrap-break-words")}>
             Fullstack developer, Open Source enthusiast, Computer lover
           </h2>
-          <p className={cn("mt-7 break-words")}>
+          <p className={cn("mt-7 wrap-break-words")}>
             I'm a {calculateAge(BIRTHDAY)} years old developer from Rome, Italy;
             passionate about systems' software.
           </p>
-          <p className={cn("mt-7 break-words")}>
+          <p className={cn("mt-7 wrap-break-words")}>
             I love doing system's programming, building developement tools,
             utility tools, but I also enjoy making user interfaces and desktop
             apps.
@@ -92,25 +92,29 @@ const App = () => {
             For backend, systems, etc, I love Go and Rust. <br />
             For frontend, I use React and TypeScript.
           </p>
-          <p className={cn("mt-7 break-words")}>
+          <p className={cn("mt-7 wrap-break-words")}>
             I'm currently pursuing a bachelor's degree in Computer Science at
             'La Sapienza' University of Rome.
           </p>
-          <p className={cn("mt-7 break-words")}>
+          <p className={cn("mt-7 wrap-break-words")}>
             Apart from nerd stuff, I enjoy other nerd stuff, such as movies,
             comics and photography. <br />
             Jazz is the only way!
           </p>
-          <span
+          <div
             className={cn(
-              "w-full flex gap-4 sm:gap-16 justify-center mt-8 text-left whitespace-pre",
-              "hidden sm:flex",
-              "overflow-x-auto"
+              "w-full flex gap-4 sm:gap-16 justify-center items-center mt-8 text-left whitespace-pre",
+              "scale-75 sm:scale-100 origin-center"
             )}
           >
             <p>{TUX}</p>
             <p>{DEBIAN}</p>
-          </span>
+          </div>
+          <h2
+            className={cn("mt-7 sm:text-[32px] text-center wrap-break-words")}
+          >
+            Projects
+          </h2>
         </div>
       </div>
     </div>

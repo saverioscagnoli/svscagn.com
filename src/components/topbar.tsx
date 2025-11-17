@@ -1,6 +1,6 @@
 import { cn } from "~/lib/utils";
 import { Button } from "~/components/ui/button";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 const CAT_FRAMES = ["(=①ω①=)", "(=①ω①=)∫"];
 
@@ -31,7 +31,7 @@ const Topbar: React.FC<React.ComponentProps<"div">> = ({
       {...props}
     >
       <a></a>
-      <p className={cn("whitespace-pre")}>{CAT_FRAMES[frame]}</p>
+      <p className={cn("select-none whitespace-pre")}>{CAT_FRAMES[frame]}</p>
       <div className={cn("flex gap-2 sm:gap-4")}>
         <Button className="text-sm sm:text-base">Projects</Button>
         <Button className="text-sm sm:text-base">Source</Button>
