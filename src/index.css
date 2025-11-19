@@ -5,6 +5,9 @@
   src: url("/DOS-V.ttf");
   font-weight: normal;
   font-style: normal;
+  font-smooth: never;
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 @font-face {
@@ -12,6 +15,9 @@
   src: url("/IBM-Model3x.ttf");
   font-weight: normal;
   font-style: normal;
+  font-smooth: never;
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
@@ -21,8 +27,8 @@ body {
   -webkit-font-smoothing: none;
   -moz-osx-font-smoothing: grayscale;
   font-smooth: never;
+  text-rendering: geometricPrecision;
   line-height: 1.2;
-
   image-rendering: -moz-crisp-edges;
   image-rendering: -webkit-crisp-edges;
   image-rendering: pixelated;
@@ -34,10 +40,14 @@ body {
   -webkit-font-smoothing: none;
   -moz-osx-font-smoothing: grayscale;
   font-smooth: never;
-  text-rendering: optimizeSpeed;
+  text-rendering: geometricPrecision;
 
-  -webkit-transform: translateZ(0);
-  transform: translateZ(0);
+  -webkit-transform: translate3d(0, 0, 0);
+  transform: translate3d(0, 0, 0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  -webkit-perspective: 1000;
+  perspective: 1000;
 }
 
 h1,
@@ -49,6 +59,8 @@ h6,
 p,
 span,
 div {
-  transform: translateZ(0);
+  transform: translate3d(0, 0, 0);
+  -webkit-transform: translate3d(0, 0, 0);
   backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }

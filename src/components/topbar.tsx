@@ -33,8 +33,12 @@ const Topbar: React.FC<React.ComponentProps<"div">> = ({
       <a></a>
       <p className={cn("select-none whitespace-pre")}>{CAT_FRAMES[frame]}</p>
       <div className={cn("flex gap-2 sm:gap-4")}>
-        <Button className="text-sm sm:text-base">Projects</Button>
-        <Button className="text-sm sm:text-base">Source</Button>
+        <a
+          href="https://github.com/saverioscagnoli/svscagn.com"
+          target="_blank"
+        >
+          <Button className="text-sm sm:text-base">Source</Button>
+        </a>
       </div>
     </div>
   );

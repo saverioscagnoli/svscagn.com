@@ -63,7 +63,7 @@ const App = () => {
           "w-full h-full absolute inset-0 z-10",
           "pt-24 pb-8",
           "flex justify-center",
-          "backdrop-blur-xs",
+          "backdrop-blur-[2px]",
           "overflow-y-auto overflow-x-hidden"
         )}
       >
@@ -71,7 +71,7 @@ const App = () => {
           className={cn(
             "max-w-full w-full px-4 sm:px-6 sm:max-w-xl md:max-w-2xl lg:max-w-3xl",
             "pb-8",
-            "bg-black/30 rounded-lg p-6 sm:p-8"
+            "rounded-lg p-6 sm:p-8"
           )}
         >
           <h1 className={cn("text-[32px] sm:text-[48px] wrap-break-words")}>
@@ -104,7 +104,7 @@ const App = () => {
           <div
             className={cn(
               "w-full flex gap-4 sm:gap-16 justify-center items-center mt-8 text-left whitespace-pre",
-              "scale-75 sm:scale-100 origin-center"
+              "text-[16px]"
             )}
           >
             <p>{TUX}</p>
@@ -115,6 +115,63 @@ const App = () => {
           >
             Projects
           </h2>
+
+          <div
+            className={cn(
+              "w-full flex flex-col justify-between items-center",
+              "mt-12"
+            )}
+          >
+            <div className={cn("w-full flex justify-between items-center")}>
+              <div className={cn("px-4")}>
+                <a
+                  href="https://github.com/saverioscagnoli/wwwidgets"
+                  target="_blank"
+                  className={cn("hover:underline")}
+                >
+                  <h3 className={cn("text-[24px] text-center")}>WWWidgets</h3>
+                </a>
+                <p className={cn("text-[16px]", "mt-4")}>
+                  This is a widget framework for wayland compositor, built with
+                  webview2gtk. All the power of the web on the desktop!
+                </p>
+              </div>
+              <div className={cn("w-full flex justify-between items-center")}>
+                <div className={cn("px-4")}>
+                  <a
+                    href="https://github.com/saverioscagnoli/pls"
+                    target="_blank"
+                    className={cn("hover:underline")}
+                  >
+                    <h3 className={cn("text-[24px] text-center")}>pls</h3>
+                  </a>
+                  <p className={cn("text-[16px]", "mt-4")}>
+                    A modern version of ls, highly customizable, and various
+                    file system utilities.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div
+              className={cn(
+                "w-full flex justify-between items-center",
+                "mt-12 pb-12"
+              )}
+            >
+              <div className={cn("px-4")}>
+                <a
+                  href="https://github.com/saverioscagnoli/karna"
+                  target="_blank"
+                  className={cn("hover:underline")}
+                >
+                  <h3 className={cn("text-[24px] text-center")}>Karna</h3>
+                </a>
+                <p className={cn("text-[16px]", "mt-4")}>
+                  2D and I hope soon to be 3D game engine based on wgpu
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
